@@ -1,0 +1,22 @@
+# Vite
+.vite/
+dist/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Переменные окружения
+.env
+.env.local
+.env.*.local
+
+# Локальные файлы IDE и ОС
+.vscode/
+.idea/
+.DS_Store
+
+# Временные файлы
+*.tmp
+*.log
