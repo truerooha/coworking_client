@@ -66,18 +66,18 @@ export default function App() {
   const [rooms] = useState<Room[]>([
     {
       id: '1',
-      name: 'Конференц-зал А',
-      image: 'https://images.unsplash.com/photo-1703355685952-03ed19f70f51?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb25mZXJlbmNlJTIwcm9vbSUyMGJ1c2luZXNzfGVufDF8fHx8MTc1NTgwNTE0M3ww&ixlib=rb-4.1.0&q=80&w=1080',
-      capacity: 12,
+      name: 'Конференц-зал',
+      image: 'https://i.postimg.cc/WtpDfQPt/room.jpg',
+      capacity: 10,
       description: 'Большой конференц-зал с видеоконференцсвязью',
       isOccupied: false,
     },
     {
       id: '2', 
-      name: 'Переговорная Б',
-      image: 'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb25mZXJlbmNlJTIwcm9vbSUyMGJ1c2luZXNzfGVufDF8fHx8MTc1NTgwNTE0M3ww&ixlib=rb-4.1.0&q=80&w=1080',
-      capacity: 6,
-      description: 'Уютная переговорная для небольших команд',
+      name: 'Zoom room 1',
+      image: 'https://i.postimg.cc/8JNFGYJK/zoom1.jpg',
+      capacity: 1,
+      description: 'Уютная комната для видеозвонков',
       isOccupied: true,
       currentBooking: {
         user: 'Иван Петров',
@@ -87,18 +87,10 @@ export default function App() {
     },
     {
       id: '3',
-      name: 'Творческая студия',
-      image: 'https://images.unsplash.com/photo-1718220216044-006f43e3a9b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxvZmZpY2UlMjB3b3Jrc3BhY2UlMjBjb2xsYWJvcmF0aW9ufGVufDF8fHx8MTc1NTgzMjU0OHww&ixlib=rb-4.1.0&q=80&w=1080',
-      capacity: 8,
-      description: 'Открытое пространство для совместной работы с досками и гибкой мебелью',
-      isOccupied: false,
-    },
-    {
-      id: '4',
-      name: 'Комната фокуса',
-      image: 'https://images.unsplash.com/photo-1594892342285-9b86df3ad47a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0ZWFtJTIwd29ya3NwYWNlJTIwbW9kZXJufGVufDF8fHx8MTc1NTg1MjI0NHww&ixlib=rb-4.1.0&q=80&w=1080',
-      capacity: 4,
-      description: 'Тихое место для сосредоточенной работы и малых команд',
+      name: 'Zoom room 2',
+      image: 'https://i.postimg.cc/8JNFGYJK/zoom1.jpg',
+      capacity: 1,
+      description: 'Уютная комната для видеозвонков',
       isOccupied: false,
     }
   ]);
