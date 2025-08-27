@@ -96,6 +96,8 @@ export default function App() {
         lastName: user.last_name || ''
       };
     }
+    //вывести всплывающее сообщение с логином пользователя
+    alert(window.Telegram.WebApp.initDataUnsafe.user.username);
     return null;
   };
 
