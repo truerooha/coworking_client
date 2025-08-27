@@ -55,16 +55,18 @@ export default function App() {
 
   // Список разрешенных Telegram логинов (в реальном приложении будет в базе данных)
   const [allowedTelegramUsers] = useState<string[]>([
-    'johndoe123',
+    'true_rooha',
     'jane_smith',
     'admin_user'
   ]);
 
   // Список администраторов
   const [adminUsers] = useState<string[]>([
-    'admin_user'
+    'true_rooha'
   ]);
 
+  // Давай это пока закомментим и заменим реальным получением пользователя
+  /*
   // Имитация получения данных пользователя из Telegram
   const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
     // В реальном приложении здесь будет Telegram WebApp API
@@ -80,6 +82,21 @@ export default function App() {
     
     // Симулируем случайного пользователя для демо
     return mockTelegramUsers[Math.floor(Math.random() * mockTelegramUsers.length)];
+  };
+  */
+
+  // Получение пользователя из Telegram WebApp API
+  const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
+    // Проверяем, доступен ли объект Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+      const user = window.Telegram.WebApp.initDataUnsafe.user;
+      return {
+        username: user.username,
+        firstName: user.first_name,
+        lastName: user.last_name || ''
+      };
+    }
+    return null;
   };
 
   // Проверка авторизации при загрузке
