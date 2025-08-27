@@ -44,11 +44,14 @@ export type Booking = {
 export type Screen = 'denied' | 'home' | 'room' | 'bookings' | 'profile' | 'admin';
 
 export default function App() {
+  const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined;
   const [currentScreen, setCurrentScreen] = useState<Screen>('denied');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [showAdmin, setShowAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
 
   // Список разрешенных Telegram логинов (в реальном приложении будет в базе данных)
   const [allowedTelegramUsers] = useState<string[]>([
@@ -60,62 +63,6 @@ export default function App() {
   // Список администраторов
   const [adminUsers] = useState<string[]>([
     'admin_user'
-  ]);
-
-  // Mock данные комнат
-  const [rooms] = useState<Room[]>([
-    {
-      id: '1',
-      name: 'Конференц-зал',
-      image: 'https://i.postimg.cc/WtpDfQPt/room.jpg',
-      capacity: 10,
-      description: 'Большой конференц-зал с видеоконференцсвязью',
-      isOccupied: false,
-    },
-    {
-      id: '2', 
-      name: 'Zoom room 1',
-      image: 'https://i.postimg.cc/8JNFGYJK/zoom1.jpg',
-      capacity: 1,
-      description: 'Уютная комната для видеозвонков',
-      isOccupied: true,
-      currentBooking: {
-        user: 'Иван Петров',
-        startTime: '14:00',
-        endTime: '15:30'
-      }
-    },
-    {
-      id: '3',
-      name: 'Zoom room 2',
-      image: 'https://i.postimg.cc/8JNFGYJK/zoom1.jpg',
-      capacity: 1,
-      description: 'Уютная комната для видеозвонков',
-      isOccupied: false,
-    }
-  ]);
-
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: '1',
-      roomId: '1',
-      roomName: 'Конференц-зал А',
-      userId: 'user1',
-      date: '2025-08-23',
-      startTime: '10:00',
-      endTime: '11:30',
-      status: 'active'
-    },
-    {
-      id: '2',
-      roomId: '3',
-      roomName: 'Творческая студия',
-      userId: 'user1',
-      date: '2025-08-24',
-      startTime: '14:00',
-      endTime: '16:00',
-      status: 'active'
-    }
   ]);
 
   // Имитация получения данных пользователя из Telegram
@@ -179,6 +126,18 @@ export default function App() {
     checkAuthorization();
   }, []);
 
+  // Загрузить комнаты с API
+  useEffect(() => {
+    const url = API_BASE_URL ? `${API_BASE_URL}/api/rooms` : '/api/rooms';
+    fetch(url)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: Room[]) => setRooms(data))
+      .catch(() => setRooms([]));
+  }, []);
+
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
@@ -192,13 +151,13 @@ export default function App() {
   };
 
   const handleBookRoom = (roomId: string, date: string, startTime: string, endTime: string) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room || !currentUser) return;
+    if (!currentUser) return;
+    const roomName = selectedRoom && selectedRoom.id === roomId ? selectedRoom.name : 'Room';
 
     const newBooking: Booking = {
       id: Date.now().toString(),
       roomId,
-      roomName: room.name,
+      roomName,
       userId: currentUser.id,
       date,
       startTime,
