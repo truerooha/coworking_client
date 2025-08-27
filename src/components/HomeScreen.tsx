@@ -95,10 +95,10 @@ export function HomeScreen({ rooms, onRoomSelect }: HomeScreenProps) {
               </div>
 
               <div className="flex items-center justify-between mt-4">
-                <Button 
+                <Button
                   size="sm"
                   variant={room.isOccupied ? "outline" : "default"}
-                  className={room.isOccupied ? "text-gray-600" : "bg-blue-600 hover:bg-blue-700"}
+                  className={room.isOccupied ? "ml-auto text-gray-600" : "ml-auto bg-blue-600 hover:bg-blue-700"}
                   disabled={room.isOccupied}
                 >
                   {room.isOccupied ? 'Подробнее' : 'Забронировать'}
