@@ -90,6 +90,7 @@ export default function App() {
     // Проверяем, доступен ли объект Telegram WebApp
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
+      alert(user.username);
       return {
         username: user.username,
         firstName: user.first_name,
@@ -97,7 +98,6 @@ export default function App() {
       };
     }
     //вывести всплывающее сообщение с логином пользователя
-    alert(window.Telegram.WebApp.initDataUnsafe.user.username);
     return null;
   };
 
