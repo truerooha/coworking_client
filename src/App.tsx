@@ -54,17 +54,22 @@ export default function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [telegramUsername, setTelegramUsername] = useState<string | null>(null);
 
+  const normalizeUsername = (value: string | null | undefined): string => {
+    if (!value) return '';
+    return value.replace(/^@/, '').trim().toLowerCase();
+  };
+
   // Список разрешенных Telegram логинов (в реальном приложении будет в базе данных)
   const [allowedTelegramUsers] = useState<string[]>([
     'true_rooha',
     'jane_smith',
     'admin_user'
-  ]);
+  ].map(u => u.toLowerCase()));
 
   // Список администраторов
   const [adminUsers] = useState<string[]>([
     'true_rooha'
-  ]);
+  ].map(u => u.toLowerCase()));
 
   // Давай это пока закомментим и заменим реальным получением пользователя
   /*
@@ -139,24 +144,25 @@ export default function App() {
 
       // Получаем данные из Telegram
       const telegramUser = getTelegramUser();
-      console.log('telegramUser.username:', telegramUser?.username);
-      if (telegramUser?.username) {
-        setTelegramUsername(telegramUser.username);
+      const normalized = normalizeUsername(telegramUser?.username);
+      console.log('telegramUser.username:', telegramUser?.username, 'normalized:', normalized);
+      if (normalized) {
+        setTelegramUsername(normalized);
       }
       
-      if (!telegramUser || !telegramUser.username) {
+      if (!telegramUser || !normalized) {
         setIsLoading(false);
         return;
       }
 
       // Проверяем доступ пользователя
-      if (allowedTelegramUsers.includes(telegramUser.username)) {
+      if (allowedTelegramUsers.includes(normalized)) {
         const user: User = {
-          id: telegramUser.username,
+          id: normalized,
           name: telegramUser.firstName,
           surname: telegramUser.lastName,
-          telegramUsername: telegramUser.username,
-          isAdmin: adminUsers.includes(telegramUser.username)
+          telegramUsername: normalized,
+          isAdmin: adminUsers.includes(normalized)
         };
         
         setCurrentUser(user);
