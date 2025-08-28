@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API_BASE_URL } from './config/env';
+import { API_BASE_URL, IS_PROD } from './config/env';
 import { AccessDeniedScreen } from './components/AccessDeniedScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { RoomProfile } from './components/RoomProfile';
@@ -116,7 +116,9 @@ export default function App() {
 
       // Проверяем доступ на сервере
       try {
-        const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/check` : '/api/auth/check';
+        const url = API_BASE_URL
+          ? `${API_BASE_URL}/api/auth/check`
+          : (IS_PROD ? `${window.location.origin}/api/auth/check` : '/api/auth/check');
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -153,7 +155,9 @@ export default function App() {
 
   // Загрузить комнаты с API
   useEffect(() => {
-    const url = API_BASE_URL ? `${API_BASE_URL}/api/rooms` : '/api/rooms';
+    const url = API_BASE_URL
+      ? `${API_BASE_URL}/api/rooms`
+      : (IS_PROD ? `${window.location.origin}/api/rooms` : '/api/rooms');
     fetch(url)
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
