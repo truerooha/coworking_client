@@ -106,15 +106,15 @@ export default function App() {
     const checkAuthorization = async () => {
       setIsLoading(true);
       
-      // Проверяем сохраненного пользователя
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        const user = JSON.parse(savedUser);
-        setCurrentUser(user);
-        setCurrentScreen('home');
-        setIsLoading(false);
-        return;
-      }
+      // // Проверяем сохраненного пользователя
+      // const savedUser = localStorage.getItem('currentUser');
+      // if (savedUser) {
+      //   const user = JSON.parse(savedUser);
+      //   setCurrentUser(user);
+      //   setCurrentScreen('home');
+      //   setIsLoading(false);
+      //   return;
+      // }
 
       // Получаем данные из Telegram
       const telegramUser = getTelegramUser();
