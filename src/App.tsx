@@ -52,24 +52,18 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [telegramUsername, setTelegramUsername] = useState<string | null>(null);
-
-  const normalizeUsername = (value: string | null | undefined): string => {
-    if (!value) return '';
-    return value.replace(/^@/, '').trim().toLowerCase();
-  };
 
   // Список разрешенных Telegram логинов (в реальном приложении будет в базе данных)
   const [allowedTelegramUsers] = useState<string[]>([
     'true_rooha',
     'jane_smith',
     'admin_user'
-  ].map(u => u.toLowerCase()));
+  ]);
 
   // Список администраторов
   const [adminUsers] = useState<string[]>([
     'true_rooha'
-  ].map(u => u.toLowerCase()));
+  ]);
 
   // Давай это пока закомментим и заменим реальным получением пользователя
   /*
@@ -95,13 +89,8 @@ export default function App() {
   const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
     try {
       (window as any)?.Telegram?.WebApp?.ready?.();
-      console.log('WebApp available:', !!window.Telegram?.WebApp);
-      console.log('initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
-    } catch (e) {
-      console.error('Telegram WebApp error:', e);
-    }
+    } catch {}
     const user = (window as any)?.Telegram?.WebApp?.initDataUnsafe?.user;
-    console.log('Raw user:', user);
 
     if (user && (user.username || user.first_name || user.last_name)) {
       return {
@@ -145,25 +134,20 @@ export default function App() {
 
       // Получаем данные из Telegram
       const telegramUser = getTelegramUser();
-      const normalized = normalizeUsername(telegramUser?.username);
-      console.log('telegramUser.username:', telegramUser?.username, 'normalized:', normalized);
-      if (normalized) {
-        setTelegramUsername(normalized);
-      }
       
-      if (!telegramUser || !normalized) {
+      if (!telegramUser || !telegramUser.username) {
         setIsLoading(false);
         return;
       }
 
       // Проверяем доступ пользователя
-      if (allowedTelegramUsers.includes(normalized)) {
+      if (allowedTelegramUsers.includes(telegramUser.username)) {
         const user: User = {
-          id: normalized,
+          id: telegramUser.username,
           name: telegramUser.firstName,
           surname: telegramUser.lastName,
-          telegramUsername: normalized,
-          isAdmin: adminUsers.includes(normalized)
+          telegramUsername: telegramUser.username,
+          isAdmin: adminUsers.includes(telegramUser.username)
         };
         
         setCurrentUser(user);
@@ -232,11 +216,7 @@ export default function App() {
 
   const userBookings = bookings.filter(b => b.userId === currentUser?.id && b.status === 'active');
 
-  const usernameBanner = telegramUsername ? (
-    <div className="fixed top-2 right-2 z-50 bg-black/70 text-white text-xs px-3 py-1 rounded-md shadow">
-      TG: {telegramUsername}
-    </div>
-  ) : null;
+  const usernameBanner = null;
 
   // Загрузка
   if (isLoading) {
@@ -257,7 +237,6 @@ export default function App() {
   //     <div className="min-h-screen bg-background">
   //       <AccessDeniedScreen />
   //       <Toaster />
-  //       {usernameBanner}
   //     </div>
   //   );
   // }
