@@ -88,17 +88,18 @@ export default function App() {
 
   // Получение пользователя из Telegram WebApp API
   const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
-    // Проверяем, доступен ли объект Telegram WebApp
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-      const user = window.Telegram.WebApp.initDataUnsafe.user;
-      alert(user.username);
+    const user = window?.Telegram?.WebApp?.initDataUnsafe?.user as
+      | { username?: string; first_name?: string; last_name?: string }
+      | undefined;
+
+    if (user && user.username) {
       return {
         username: user.username,
-        firstName: user.first_name,
+        firstName: user.first_name || '',
         lastName: user.last_name || ''
       };
     }
-    //вывести всплывающее сообщение с логином пользователя
+
     return null;
   };
 
