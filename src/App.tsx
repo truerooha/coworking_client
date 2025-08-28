@@ -250,16 +250,16 @@ export default function App() {
     );
   }
 
-  // Нет доступа
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AccessDeniedScreen />
-        <Toaster />
-        {usernameBanner}
-      </div>
-    );
-  }
+  // // Нет доступа
+  // if (!currentUser) {
+  //   return (
+  //     <div className="min-h-screen bg-background">
+  //       <AccessDeniedScreen />
+  //       <Toaster />
+  //       {usernameBanner}
+  //     </div>
+  //   );
+  // }
 
   // Админ панель
   if (showAdmin && currentUser?.isAdmin) {
