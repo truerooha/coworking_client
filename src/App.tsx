@@ -88,15 +88,34 @@ export default function App() {
 
   // Получение пользователя из Telegram WebApp API
   const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
-    const user = window?.Telegram?.WebApp?.initDataUnsafe?.user as
-      | { username?: string; first_name?: string; last_name?: string }
+    try {
+      // Сигнал Telegram, что WebApp готов (idempotent)
+      (window as any)?.Telegram?.WebApp?.ready?.();
+    } catch {}
+
+    const user = (window as any)?.Telegram?.WebApp?.initDataUnsafe?.user as
+      | { id?: number; username?: string; first_name?: string; last_name?: string }
       | undefined;
 
-    if (user && user.username) {
+    if (user && (user.username || user.first_name || user.last_name)) {
       return {
-        username: user.username,
+        username: user.username || String(user.id || ''),
         firstName: user.first_name || '',
         lastName: user.last_name || ''
+      };
+    }
+
+    // Fallback для локальной отладки: берём из query-параметров
+    const params = new URLSearchParams(window.location.search);
+    const qpUsername = params.get('tg_username') || undefined;
+    const qpFirst = params.get('tg_first_name') || undefined;
+    const qpLast = params.get('tg_last_name') || undefined;
+    const qpId = params.get('tg_id') || undefined;
+    if (qpUsername || qpFirst || qpLast || qpId) {
+      return {
+        username: qpUsername || qpId || '',
+        firstName: qpFirst || '',
+        lastName: qpLast || ''
       };
     }
 
