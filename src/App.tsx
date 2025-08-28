@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from './config/env';
 import { AccessDeniedScreen } from './components/AccessDeniedScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { RoomProfile } from './components/RoomProfile';
@@ -44,7 +45,6 @@ export type Booking = {
 export type Screen = 'denied' | 'home' | 'room' | 'bookings' | 'profile' | 'admin';
 
 export default function App() {
-  const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined;
   const [currentScreen, setCurrentScreen] = useState<Screen>('denied');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
