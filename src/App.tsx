@@ -52,6 +52,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [telegramUsername, setTelegramUsername] = useState<string | null>(null);
 
   // Список разрешенных Telegram логинов (в реальном приложении будет в базе данных)
   const [allowedTelegramUsers] = useState<string[]>([
@@ -118,6 +119,10 @@ export default function App() {
 
       // Получаем данные из Telegram
       const telegramUser = getTelegramUser();
+      console.log('telegramUser.username:', telegramUser?.username);
+      if (telegramUser?.username) {
+        setTelegramUsername(telegramUser.username);
+      }
       
       if (!telegramUser || !telegramUser.username) {
         setIsLoading(false);
@@ -200,6 +205,12 @@ export default function App() {
 
   const userBookings = bookings.filter(b => b.userId === currentUser?.id && b.status === 'active');
 
+  const usernameBanner = telegramUsername ? (
+    <div className="fixed top-2 right-2 z-50 bg-black/70 text-white text-xs px-3 py-1 rounded-md shadow">
+      TG: {telegramUsername}
+    </div>
+  ) : null;
+
   // Загрузка
   if (isLoading) {
     return (
@@ -208,6 +219,7 @@ export default function App() {
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Загрузка...</p>
         </div>
+        {usernameBanner}
       </div>
     );
   }
@@ -218,6 +230,7 @@ export default function App() {
       <div className="min-h-screen bg-background">
         <AccessDeniedScreen />
         <Toaster />
+        {usernameBanner}
       </div>
     );
   }
@@ -228,12 +241,14 @@ export default function App() {
       <div className="min-h-screen bg-background">
         <AdminPanel onBack={() => setShowAdmin(false)} />
         <Toaster />
+        {usernameBanner}
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background pb-16">
+      {usernameBanner}
       {currentScreen === 'home' && (
         <HomeScreen 
           rooms={rooms}
