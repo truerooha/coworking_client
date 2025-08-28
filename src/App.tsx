@@ -65,26 +65,6 @@ export default function App() {
     'true_rooha'
   ]);
 
-  // Давай это пока закомментим и заменим реальным получением пользователя
-  /*
-  // Имитация получения данных пользователя из Telegram
-  const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
-    // В реальном приложении здесь будет Telegram WebApp API
-    // window.Telegram.WebApp.initDataUnsafe?.user
-    
-    // Mock данные для демонстрации
-    const mockTelegramUsers = [
-      { username: 'johndoe123', firstName: 'Иван', lastName: 'Петров' },
-      { username: 'jane_smith', firstName: 'Анна', lastName: 'Смирнова' },
-      { username: 'true_rooha', firstName: 'Администратор', lastName: 'Системы' },
-      { username: 'unauthorized_user', firstName: 'Неавторизованный', lastName: 'Пользователь' }
-    ];
-    
-    // Симулируем случайного пользователя для демо
-    return mockTelegramUsers[Math.floor(Math.random() * mockTelegramUsers.length)];
-  };
-  */
-
   // Получение пользователя из Telegram WebApp API
   const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
     try {
@@ -231,14 +211,14 @@ export default function App() {
   }
 
   // // Нет доступа
-  // if (!currentUser) {
-  //   return (
-  //     <div className="min-h-screen bg-background">
-  //       <AccessDeniedScreen />
-  //       <Toaster />
-  //     </div>
-  //   );
-  // }
+  if (!currentUser) {
+      return (
+        <div className="min-h-screen bg-background">
+        <AccessDeniedScreen />
+        <Toaster />
+        </div>
+      );
+  }
 
   // Админ панель
   if (showAdmin && currentUser?.isAdmin) {
