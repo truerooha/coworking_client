@@ -53,17 +53,12 @@ export default function App() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  // Список разрешенных Telegram логинов (в реальном приложении будет в базе данных)
-  const [allowedTelegramUsers] = useState<string[]>([
-    'true_rooha',
-    'jane_smith',
-    'admin_user'
-  ]);
-
-  // Список администраторов
-  const [adminUsers] = useState<string[]>([
-    'true_rooha'
-  ]);
+  type AccessCheckResponse = {
+    allowed: boolean;
+    isAdmin: boolean;
+    name?: string;
+    surname?: string;
+  };
 
   // Получение пользователя из Telegram WebApp API
   const getTelegramUser = (): { username: string; firstName: string; lastName: string } | null => {
@@ -119,19 +114,35 @@ export default function App() {
         return;
       }
 
-      // Проверяем доступ пользователя
-      if (allowedTelegramUsers.includes(telegramUser.username)) {
-        const user: User = {
-          id: telegramUser.username,
-          name: telegramUser.firstName,
-          surname: telegramUser.lastName,
-          telegramUsername: telegramUser.username,
-          isAdmin: adminUsers.includes(telegramUser.username)
-        };
-        
-        setCurrentUser(user);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        setCurrentScreen('home');
+      // Проверяем доступ на сервере
+      try {
+        const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/check` : '/api/auth/check';
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: telegramUser.username })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as AccessCheckResponse;
+        if (data.allowed) {
+          const user: User = {
+            id: telegramUser.username,
+            name: data.name ?? telegramUser.firstName,
+            surname: data.surname ?? telegramUser.lastName,
+            telegramUsername: telegramUser.username,
+            isAdmin: !!data.isAdmin
+          };
+          setCurrentUser(user);
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          setCurrentScreen('home');
+        } else {
+          setCurrentUser(null);
+          setCurrentScreen('denied');
+        }
+      } catch {
+        // На ошибке проверки — считаем, что доступа нет
+        setCurrentUser(null);
+        setCurrentScreen('denied');
       }
       
       setIsLoading(false);
