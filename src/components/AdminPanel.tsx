@@ -6,30 +6,60 @@ import { Card, CardContent, CardHeader } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface AdminPanelProps {
   onBack: () => void;
 }
 
+interface User {
+  username: string;
+  isAdmin: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export function AdminPanel({ onBack }: AdminPanelProps) {
-  const [allowedUsers, setAllowedUsers] = useState<string[]>([
-    'johndoe123',
-    'jane_smith',
-    'admin_user',
-    'ivanov_ivan',
-    'petrov_petr'
-  ]);
-
-  const [adminUsers, setAdminUsers] = useState<string[]>([
-    'admin_user'
-  ]);
-
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [newTelegramLogin, setNewTelegramLogin] = useState('');
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleAddTelegramUser = async (e: React.FormEvent) => {
+  // Получаем список пользователей с сервера
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/auth/users');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        toast.error('Сервер недоступен. Проверьте подключение к интернету.');
+      } else {
+        toast.error(`Ошибка при загрузке пользователей: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      // Устанавливаем пустой массив в случае ошибки
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Загружаем пользователей при монтировании компонента
+  React.useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Получаем списки для совместимости с существующим кодом
+  const allowedUsers = users.map(user => user.username);
+  const adminUsers = users.filter(user => user.isAdmin).map(user => user.username);
+
+  const handleAddTelegramUser = async (e: any) => {
     e.preventDefault();
     
     const cleanLogin = newTelegramLogin.replace('@', '').trim();
@@ -46,34 +76,73 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
 
     setIsAddingUser(true);
 
-    // Симуляция API вызова
-    setTimeout(() => {
-      setAllowedUsers(prev => [...prev, cleanLogin]);
+    try {
+      const response = await fetch('/api/auth/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: cleanLogin,
+          isAdmin: false
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add user');
+      }
+
+      toast.success(`Пользователь @${cleanLogin} добавлен в систему`);
       setNewTelegramLogin('');
       setIsDialogOpen(false);
-      setIsAddingUser(false);
       
-      toast.success(`Пользователь @${cleanLogin} добавлен в систему`);
-    }, 500);
+      // Обновляем список пользователей
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error adding user:', error);
+      toast.error(`Ошибка при добавлении пользователя: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsAddingUser(false);
+    }
   };
 
-  const handleRemoveUser = (telegramLogin: string) => {
+  const handleRemoveUser = async (telegramLogin: string) => {
     if (adminUsers.includes(telegramLogin)) {
       toast.error('Нельзя удалить администратора');
       return;
     }
 
-    setAllowedUsers(prev => prev.filter(u => u !== telegramLogin));
-    toast.success(`Пользователь @${telegramLogin} удален из системы`);
+    try {
+      // Здесь нужно добавить endpoint для удаления пользователей на сервере
+      // Пока что просто обновляем локальное состояние
+      setUsers(prev => prev.filter(user => user.username !== telegramLogin));
+      toast.success(`Пользователь @${telegramLogin} удален из системы`);
+    } catch (error) {
+      console.error('Error removing user:', error);
+      toast.error('Ошибка при удалении пользователя');
+    }
   };
 
-  const toggleAdminStatus = (telegramLogin: string) => {
-    if (adminUsers.includes(telegramLogin)) {
-      setAdminUsers(prev => prev.filter(u => u !== telegramLogin));
-      toast.success(`@${telegramLogin} больше не администратор`);
-    } else {
-      setAdminUsers(prev => [...prev, telegramLogin]);
-      toast.success(`@${telegramLogin} получил права администратора`);
+  const toggleAdminStatus = async (telegramLogin: string) => {
+    try {
+      // Здесь нужно добавить endpoint для обновления статуса админа на сервере
+      // Пока что просто обновляем локальное состояние
+      setUsers(prev => prev.map(user => 
+        user.username === telegramLogin 
+          ? { ...user, isAdmin: !user.isAdmin }
+          : user
+      ));
+      
+      const isCurrentlyAdmin = adminUsers.includes(telegramLogin);
+      if (isCurrentlyAdmin) {
+        toast.success(`@${telegramLogin} больше не администратор`);
+      } else {
+        toast.success(`@${telegramLogin} получил права администратора`);
+      }
+    } catch (error) {
+      console.error('Error toggling admin status:', error);
+      toast.error('Ошибка при изменении статуса администратора');
     }
   };
 
@@ -109,13 +178,13 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-semibold text-blue-600">
-                  {allowedUsers.length}
+                  {isLoading ? '...' : allowedUsers.length}
                 </div>
                 <div className="text-xs text-gray-600">Всего пользователей</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-semibold text-purple-600">
-                  {adminUsers.length}
+                  {isLoading ? '...' : adminUsers.length}
                 </div>
                 <div className="text-xs text-gray-600">Администраторов</div>
               </div>
@@ -134,7 +203,20 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Управление доступом</h3>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={fetchUsers}
+                  disabled={isLoading}
+                  className="text-gray-600 hover:text-gray-700"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Обновить
+                </Button>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,14 +271,27 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                   </form>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
             <p className="text-sm text-gray-600 mt-1">
-              Только пользователи из этого списка могут получить доступ к приложению
+              Только пользователи из этого списка могут получить доступ к приложению. 
+              Данные загружаются с сервера MongoDB.
             </p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {allowedUsers.map((telegramLogin, index) => (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-3" />
+                <span className="text-gray-600">Загрузка пользователей...</span>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {allowedUsers.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Пользователи не найдены</p>
+                  </div>
+                ) : (
+                  allowedUsers.map((telegramLogin, index) => (
                 <div key={telegramLogin}>
                   <div className="flex items-center justify-between py-3">
                     <div className="flex items-center space-x-3">
@@ -246,8 +341,9 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
                   </div>
                   {index < allowedUsers.length - 1 && <Separator />}
                 </div>
-              ))}
-            </div>
+              ))
+              </div>
+            )}
           </CardContent>
         </Card>
 
