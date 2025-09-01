@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from './ui/card';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { Room } from '../App';
 
 interface RoomProfileProps {
@@ -14,18 +14,21 @@ interface RoomProfileProps {
 }
 
 export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [startTime, setStartTime] = useState<string>('');
-  const [endTime, setEndTime] = useState<string>('');
+  // Получаем сегодняшнюю дату в формате YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
+  
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
 
   // Генерируем следующие 7 дней
-  const getDateOptions = () => {
-    const dates = [];
-    const today = new Date();
+  const getDateOptions = (): Array<{ value: string; label: string }> => {
+    const dates: Array<{ value: string; label: string }> = [];
+    const todayDate = new Date();
     
     for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
+      const date = new Date(todayDate);
+      date.setDate(todayDate.getDate() + i);
       
       const dateStr = date.toISOString().split('T')[0];
       const displayStr = i === 0 ? 'Сегодня' : 
@@ -42,18 +45,57 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
     return dates;
   };
 
-  // Генерируем временные слоты (9:00 - 18:00)
-  const getTimeOptions = () => {
-    const times = [];
-    for (let hour = 9; hour <= 18; hour++) {
+  // Генерируем временные слоты (9:00 - 23:00 для начала, 9:00 - 00:00 для окончания)
+  const getTimeOptions = (): Array<{ value: string; label: string }> => {
+    const times: Array<{ value: string; label: string }> = [];
+    
+    // Время начала: с 9:00 до 23:00
+    for (let hour = 9; hour <= 23; hour++) {
       for (let minute of [0, 30]) {
-        if (hour === 18 && minute === 30) break; // Заканчиваем в 18:00
+        if (hour === 23 && minute === 30) break; // Заканчиваем в 23:00
         
         const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         times.push({ value: timeStr, label: timeStr });
       }
     }
     return times;
+  };
+
+  // Генерируем время окончания (с 9:00 до 00:00)
+  const getEndTimeOptions = (): Array<{ value: string; label: string }> => {
+    const times: Array<{ value: string; label: string }> = [];
+    
+    // Время окончания: с 9:00 до 00:00 (следующий день)
+    for (let hour = 9; hour <= 23; hour++) {
+      for (let minute of [0, 30]) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        times.push({ value: timeStr, label: timeStr });
+      }
+    }
+    // Добавляем 00:00 (полночь)
+    times.push({ value: '00:00', label: '00:00' });
+    
+    return times;
+  };
+
+  // Автоматически устанавливаем время окончания через 1 час после начала
+  const handleStartTimeChange = (time: string) => {
+    setStartTime(time);
+    
+    // Если выбрано время начала, автоматически устанавливаем время окончания
+    if (time) {
+      const [hours, minutes] = time.split(':').map(Number);
+      let endHours = hours + 1;
+      let endMinutes = minutes;
+      
+      // Если время выходит за пределы дня, устанавливаем 00:00
+      if (endHours >= 24) {
+        setEndTime('00:00');
+      } else {
+        const endTimeStr = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        setEndTime(endTimeStr);
+      }
+    }
   };
 
   const handleBook = () => {
@@ -73,6 +115,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
 
   const dateOptions = getDateOptions();
   const timeOptions = getTimeOptions();
+  const endTimeOptions = getEndTimeOptions();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -173,7 +216,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Время начала
                   </label>
-                  <Select onValueChange={setStartTime}>
+                  <Select onValueChange={handleStartTimeChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Начало" />
                     </SelectTrigger>
@@ -196,7 +239,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
                       <SelectValue placeholder="Окончание" />
                     </SelectTrigger>
                     <SelectContent>
-                      {timeOptions.map((time) => (
+                      {endTimeOptions.map((time) => (
                         <SelectItem key={time.value} value={time.value}>
                           {time.label}
                         </SelectItem>
