@@ -7,10 +7,9 @@ import { ProfileScreen } from './components/ProfileScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { BottomNavigation } from './components/BottomNavigation';
 import { Toaster } from './components/ui/sonner';
+import { api } from './config/api';
 
-// URL для API - укажите здесь ваш сервер
-const API_BASE_URL = 'https://coworkingserver-production.up.railway.app'; // Замените на ваш URL
-
+// Расширяем импортированные типы для совместимости с существующим кодом
 export type User = {
   id: string;
   name: string;
@@ -47,13 +46,13 @@ export type Booking = {
 export type Screen = 'denied' | 'home' | 'room' | 'bookings' | 'profile' | 'admin';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('denied');
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [currentScreen, setCurrentScreen] = useState('denied');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [rooms, setRooms] = useState([]);
+  const [bookings, setBookings] = useState([]);
 
   type AccessCheckResponse = {
     allowed: boolean;
@@ -118,7 +117,7 @@ export default function App() {
 
       // Проверяем доступ на сервере
       try {
-        const url = `${API_BASE_URL}/api/auth/check`;
+        const url = api.auth.check;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -155,7 +154,7 @@ export default function App() {
 
   // Загрузить комнаты с API
   useEffect(() => {
-    const url = `${API_BASE_URL}/api/rooms`;
+    const url = api.rooms;
     fetch(url)
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

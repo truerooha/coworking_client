@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { toast } from 'sonner';
+import { api } from '../config/api';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -113,7 +114,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/users');
+      const response = await fetch(api.auth.users);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -160,7 +161,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
     setIsAddingUser(true);
 
     try {
-      const response = await fetch('/api/auth/users', {
+      const response = await fetch(api.auth.users, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
