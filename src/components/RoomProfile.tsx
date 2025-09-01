@@ -48,11 +48,21 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
   // Генерируем временные слоты (9:00 - 23:00 для начала, 9:00 - 00:00 для окончания)
   const getTimeOptions = (): Array<{ value: string; label: string }> => {
     const times: Array<{ value: string; label: string }> = [];
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
     
     // Время начала: с 9:00 до 23:00
     for (let hour = 9; hour <= 23; hour++) {
       for (let minute of [0, 30]) {
         if (hour === 23 && minute === 30) break; // Заканчиваем в 23:00
+        
+        // Если это сегодня и время уже прошло, пропускаем
+        if (selectedDate === today) {
+          if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
+            continue;
+          }
+        }
         
         const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         times.push({ value: timeStr, label: timeStr });
@@ -64,18 +74,39 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
   // Генерируем время окончания (с 9:00 до 00:00)
   const getEndTimeOptions = (): Array<{ value: string; label: string }> => {
     const times: Array<{ value: string; label: string }> = [];
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
     
     // Время окончания: с 9:00 до 00:00 (следующий день)
     for (let hour = 9; hour <= 23; hour++) {
       for (let minute of [0, 30]) {
+        // Если это сегодня и время уже прошло, пропускаем
+        if (selectedDate === today) {
+          if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
+            continue;
+          }
+        }
+        
         const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         times.push({ value: timeStr, label: timeStr });
       }
     }
-    // Добавляем 00:00 (полночь)
-    times.push({ value: '00:00', label: '00:00' });
+    // Добавляем 00:00 (полночь) только если это не сегодня
+    if (selectedDate !== today) {
+      times.push({ value: '00:00', label: '00:00' });
+    }
     
     return times;
+  };
+
+  // Обработчик смены даты
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    
+    // При смене даты сбрасываем выбранные времена
+    setStartTime('');
+    setEndTime('');
   };
 
   // Автоматически устанавливаем время окончания через 1 час после начала
@@ -196,7 +227,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Дата
                 </label>
-                <Select onValueChange={setSelectedDate}>
+                <Select value={selectedDate} onValueChange={handleDateChange}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Выберите дату" />
                   </SelectTrigger>
