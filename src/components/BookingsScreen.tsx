@@ -21,7 +21,7 @@ export function BookingsScreen({ bookings, onCancelBooking }: BookingsScreenProp
         // Временный userName — берём из localStorage currentUser
         const raw = localStorage.getItem('currentUser');
         const me = raw ? JSON.parse(raw) : null;
-        const userName = me?.name || me?.telegramUsername || '';
+        const userName = me?.telegramUsername;
         if (!userName) {
           setServerBookings([]);
           setLoading(false);
