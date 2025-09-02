@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { toast } from 'sonner';
 import type { Room } from '../App';
+import { api } from '../config/api';
 
 interface RoomProfileProps {
   room: Room;
@@ -129,7 +130,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
     }
   };
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!selectedDate || !startTime || !endTime) {
       toast.error('Пожалуйста, выберите дату, время начала и окончания');
       return;
@@ -140,8 +141,36 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
       return;
     }
 
-    onBook(room.id, selectedDate, startTime, endTime);
-    toast.success('Переговорная успешно забронирована!');
+    try {
+      const res = await fetch(api.bookings, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: room.id,
+          date: selectedDate,
+          startTime,
+          endTime,
+          // Временно используем имя из карточки комнаты, пока нет auth контекста тут
+          userName: 'Я',
+        })
+      });
+
+      if (res.status === 409) {
+        const data = await res.json();
+        toast.error(`Уже забронировано пользователем: ${data.bookedBy}`);
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      toast.success('Переговорная успешно забронирована!');
+      onBook(room.id, selectedDate, startTime, endTime);
+    } catch (e: any) {
+      toast.error(e?.message || 'Не удалось создать бронирование');
+    }
   };
 
   const dateOptions = getDateOptions();

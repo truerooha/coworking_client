@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { Booking } from '../App';
+import { api } from '../config/api';
 
 interface BookingsScreenProps {
   bookings: Booking[];
@@ -11,6 +12,37 @@ interface BookingsScreenProps {
 }
 
 export function BookingsScreen({ bookings, onCancelBooking }: BookingsScreenProps) {
+  const [serverBookings, setServerBookings] = useState([] as Booking[]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        // Временный userName — берём из localStorage currentUser
+        const raw = localStorage.getItem('currentUser');
+        const me = raw ? JSON.parse(raw) : null;
+        const userName = me?.name || me?.telegramUsername || '';
+        if (!userName) {
+          setServerBookings([]);
+          setLoading(false);
+          return;
+        }
+
+        const url = `${api.bookings}/me/upcoming?userName=${encodeURIComponent(userName)}`;
+        const res = await fetch(url, { method: 'GET' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setServerBookings(Array.isArray(data.bookings) ? data.bookings : []);
+      } catch (e: any) {
+        toast.error(e?.message || 'Не удалось загрузить бронирования');
+        setServerBookings([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
   const handleCancelBooking = (booking: Booking) => {
     onCancelBooking(booking.id);
     toast.success(`Бронь ${booking.roomName} отменена`);
@@ -49,8 +81,9 @@ export function BookingsScreen({ bookings, onCancelBooking }: BookingsScreenProp
     return bookingDateTime < new Date();
   };
 
-  const upcomingBookings = bookings.filter(b => isUpcoming(b.date, b.endTime));
-  const pastBookings = bookings.filter(b => isPast(b.date, b.endTime));
+  const source = (serverBookings && serverBookings.length > 0) ? serverBookings : bookings;
+  const upcomingBookings = source.filter(b => isUpcoming(b.date, b.endTime));
+  const pastBookings = source.filter(b => isPast(b.date, b.endTime));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,6 +94,14 @@ export function BookingsScreen({ bookings, onCancelBooking }: BookingsScreenProp
       </div>
 
       <div className="p-4 space-y-6">
+        {loading && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-sm text-gray-600">Загружаем ваши бронирования...</p>
+            </CardContent>
+          </Card>
+        )}
         {/* Upcoming Bookings */}
         <div>
           <div className="flex items-center justify-between mb-4">
