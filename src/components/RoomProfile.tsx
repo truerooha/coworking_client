@@ -142,6 +142,13 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
     }
 
     try {
+      const raw = localStorage.getItem('currentUser');
+      const me = raw ? JSON.parse(raw) : null;
+      const userName: string = me?.telegramUsername || me?.name || '';
+      if (!userName) {
+        toast.error('Не удалось определить пользователя');
+        return;
+      }
       const res = await fetch(api.bookings, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -150,8 +157,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
           date: selectedDate,
           startTime,
           endTime,
-          // Временно используем имя из карточки комнаты, пока нет auth контекста тут
-          userName: 'Я',
+          userName,
         })
       });
 
