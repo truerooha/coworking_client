@@ -64,9 +64,21 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
       for (let minute of [0, 30]) {
         if (hour === 23 && minute === 30) break; // Заканчиваем в 23:00
         
-        // Если это сегодня и время уже прошло, пропускаем
+        // Для сегодняшней даты разрешаем бронирование слота, если текущее время
+        // меньше (начало слота + 20 минут). Иначе — обычное правило: только будущие слоты.
         if (selectedDate === today) {
-          if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
+          const candidate = new Date(now);
+          const [y, m, d] = selectedDate.split('-').map(Number);
+          candidate.setFullYear(y, (m || 1) - 1, d || now.getDate());
+          candidate.setHours(hour, minute, 0, 0);
+
+          const candidatePlusGraceMs = candidate.getTime() + 20 * 60 * 1000; // +20 минут
+          const nowMs = now.getTime();
+
+          const isFuture = candidate.getTime() > nowMs;
+          const withinGrace = nowMs < candidatePlusGraceMs;
+
+          if (!isFuture && !withinGrace) {
             continue;
           }
         }
@@ -255,8 +267,8 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
           </CardContent>
         </Card>
 
-        {/* Booking Form */}
-        {!room.isOccupied && (
+        {/* Booking Form (доступна всегда; сервер проверит конфликты) */}
+        (
           <Card>
             <CardHeader>
               <h3 className="font-semibold text-gray-900">Забронировать переговорную</h3>
@@ -330,7 +342,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
               </Button>
             </CardContent>
           </Card>
-        )}
+        )
 
         {/* Features */}
         <Card>
