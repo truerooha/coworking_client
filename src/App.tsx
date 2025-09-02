@@ -52,6 +52,7 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [rooms, setRooms] = useState([]);
+  const [roomsLoading, setRoomsLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
 
   type AccessCheckResponse = {
@@ -155,13 +156,15 @@ export default function App() {
   // Загрузить комнаты с API
   useEffect(() => {
     const url = api.rooms;
+    setRoomsLoading(true);
     fetch(url)
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((data: Room[]) => setRooms(data))
-      .catch(() => setRooms([]));
+      .catch(() => setRooms([]))
+      .finally(() => setRoomsLoading(false));
   }, []);
 
   const handleLogout = () => {
@@ -249,6 +252,7 @@ export default function App() {
       {currentScreen === 'home' && (
         <HomeScreen 
           rooms={rooms}
+          isLoading={roomsLoading}
           onRoomSelect={handleRoomSelect}
         />
       )}

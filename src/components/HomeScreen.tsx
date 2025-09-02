@@ -4,13 +4,15 @@ import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import type { Room } from '../App';
+import { Skeleton } from './ui/skeleton';
 
 interface HomeScreenProps {
   rooms: Room[];
+  isLoading?: boolean;
   onRoomSelect: (room: Room) => void;
 }
 
-export function HomeScreen({ rooms, onRoomSelect }: HomeScreenProps) {
+export function HomeScreen({ rooms, isLoading, onRoomSelect }: HomeScreenProps) {
   const currentTime = new Date().toLocaleTimeString('ru-RU', { 
     hour: '2-digit', 
     minute: '2-digit',
@@ -41,7 +43,31 @@ export function HomeScreen({ rooms, onRoomSelect }: HomeScreenProps) {
 
       {/* Room Grid */}
       <div className="p-4 space-y-4">
-        {rooms.map((room) => (
+        {isLoading && rooms.length === 0 && (
+          <div className="space-y-4">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Card key={`skeleton-${idx}`} className="overflow-hidden shadow-sm">
+                <div className="relative">
+                  <Skeleton className="w-full h-48" />
+                </div>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <Skeleton className="h-5 w-1/3 mb-2" />
+                      <Skeleton className="h-4 w-2/3 mb-3" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4">
+                    <Skeleton className="h-8 w-24 ml-auto" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && rooms.map((room) => (
           <Card 
             key={room.id} 
             className="overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
