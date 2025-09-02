@@ -15,8 +15,14 @@ interface RoomProfileProps {
 }
 
 export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
-  // Получаем сегодняшнюю дату в формате YYYY-MM-DD
-  const today = new Date().toISOString().split('T')[0];
+  // Локальная дата в формате YYYY-MM-DD (без UTC-сдвига)
+  const getLocalYMD = (d: Date) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+  const today = getLocalYMD(new Date());
   
   const [selectedDate, setSelectedDate] = useState(today);
   const [startTime, setStartTime] = useState('');
@@ -31,7 +37,7 @@ export function RoomProfile({ room, onBack, onBook }: RoomProfileProps) {
       const date = new Date(todayDate);
       date.setDate(todayDate.getDate() + i);
       
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = getLocalYMD(date);
       const displayStr = i === 0 ? 'Сегодня' : 
                         i === 1 ? 'Завтра' : 
                         date.toLocaleDateString('ru-RU', { 
