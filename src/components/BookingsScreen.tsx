@@ -14,6 +14,7 @@ interface BookingsScreenProps {
 export function BookingsScreen({ bookings, onCancelBooking }: BookingsScreenProps) {
   const [serverBookings, setServerBookings] = useState([] as Booking[]);
   const [loading, setLoading] = useState(true);
+  const [cancellingIds, setCancellingIds] = useState(new Set<string>());
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -43,9 +44,41 @@ export function BookingsScreen({ bookings, onCancelBooking }: BookingsScreenProp
 
     fetchBookings();
   }, []);
-  const handleCancelBooking = (booking: Booking) => {
-    onCancelBooking(booking.id);
-    toast.success(`Бронь ${booking.roomName} отменена`);
+  const handleCancelBooking = async (booking: Booking) => {
+    try {
+      // username из localStorage
+      const raw = localStorage.getItem('currentUser');
+      const me = raw ? JSON.parse(raw) : null;
+      const userName = me?.telegramUsername;
+      if (!userName) {
+        toast.error('Не удалось определить пользователя');
+        return;
+      }
+
+      setCancellingIds(prev => new Set(prev).add(booking.id));
+
+      const url = `${api.bookings}/${encodeURIComponent(booking.id)}?userName=${encodeURIComponent(userName)}`;
+      const res = await fetch(url, { method: 'DELETE' });
+      if (!res.ok) {
+        const msg = `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      // Локально убираем из serverBookings, чтобы сразу пропала
+      setServerBookings(prev => prev.filter(b => b.id !== booking.id));
+
+      // Также уведомляем контейнер (на случай локальных броней)
+      onCancelBooking(booking.id);
+      toast.success(`Бронь ${booking.roomName} отменена`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Не удалось отменить бронь');
+    } finally {
+      setCancellingIds(prev => {
+        const next = new Set(prev);
+        next.delete(booking.id);
+        return next;
+      });
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -162,10 +195,11 @@ export function BookingsScreen({ bookings, onCancelBooking }: BookingsScreenProp
                       <Button
                         variant="outline"
                         size="sm"
+                        disabled={cancellingIds.has(booking.id)}
                         onClick={() => handleCancelBooking(booking)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                       >
-                        Отменить
+                        {cancellingIds.has(booking.id) ? 'Отмена...' : 'Отменить'}
                       </Button>
                     </div>
                   </CardContent>
